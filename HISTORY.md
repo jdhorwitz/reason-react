@@ -1,6 +1,31 @@
-# 0.2.2
+# 0.2.4
 
-secret
+Major update, but again without breaking changes! =)
+
+The big change in this release is the deprecation of `statefulComponent` and `statefulComponentWithRetainedProps`. Still working; just deprecated. We'll remove it in the next breaking version.
+
+**If you'd like to know why we've made this change, please read [our blog post](). Thanks!**
+
+## Migrate From StatefulComponent to ReducerComponent
+
+see guide change
+
+TODO
+
+## SilentUpdate deprecated
+
+see the new instancevars section
+
+TODO
+
+## Miscellaneous Changes
+
+- Add `defaultChecked`, `loop` and others to DOM attribute (#29, #37, #44, #50).
+- Fix `cloneElement` binding (#49).
+- Fix stateless components's `willReceiveProps`'s return value. It's now `unit` again.
+- Remove the dependency on `create-react-class`. Now we're back to being dependency-free!
+- Bump react/react-dom to 16.
+- React/react-dom are now dependencies, rather than peerDependencies. This follows the Reason/BS idiom of making the bound library an implementation detail. NPM/Yarn will still dedupe multiple versions of react/react-dom correctly; no worries about that.
 
 # 0.2.1
 

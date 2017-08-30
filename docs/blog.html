@@ -22,6 +22,80 @@
 
   <script id="markdown" type="text/markdown">
 
+# Reducers Are Here!
+
+WIP blog post
+
+Go and get v0.2.4! It's a **non-breaking change**; what are you waiting for? =)
+
+First, a bit of context: if you use ReactJS, then you've likely heard of the the massively popular [Redux](https://github.com/reactjs/redux/) state management library. Redux's original inspiration comes from [Elm](http://elm-lang.org), whose root we share.
+
+It's only appropriate then, that in ReasonReact, we leverage the Reason language's existing facilities (notably, [variant](https://reasonml.github.io/guide/language/variant) and [pattern-matching](https://reasonml.github.io/guide/language/pattern-matching)) to model a lightweight, low-API-surface data management API, that we now provide out-of-the-box. Here it is:
+
+```reason
+type actions =
+  | BumpCount
+  | ToggleDialog bool;
+
+type state = {count: int, showDialog: bool};
+
+let component = ReasonReact.reducerComponent "MyComponent";
+
+let make ::className _children => {
+  ...component,
+  initialState: fun () => {count: 0, showDialog: false},
+  reducer: fun action state =>
+    switch action {
+    | BumpCount => ReasonReact.Update {...state, count: state.count + 1}
+    | ToggleDialog show => ReasonReact.Update {...state, showDialog: show}
+    },
+  render: fun {state, reduce} => {
+    let message = "You've clicked " ^ string_of_int state.count ^ " time(s)";
+    <div className>
+      <button onClick=(reduce (fun _ => BumpCount))>
+        (ReasonReact.stringToElement message)
+      </button>
+      <Dialog onToggle=(reduce (fun show => ToggleDialog show)) />
+    </div>
+  }
+};
+```
+
+That's basically it! A `reducer` function on your component that pattern-matches on the possible state transform actions, and specify what the next state should be. This is akin to a **state machine**, where you feed in the token (action) and transition (reducer) into the next state.
+
+Hopefully you can also see (maybe with a bit of past ReasonReact experience) that the new reducer feature is nothing but a thin layer on top of setState.
+
+to be clear: this is local. if you're into thicker state management solutions, this should still work with whichever state management paradigm you're comfortable with in reactjs.
+
+**Stateless components haven't changed**.
+
+SilentUpdate deprecated. Mutate state.instanceVars instead (migration url)
+
+migratin guide url
+
+## Design Decisions
+
+in the spirit of the reason docs sections, we'll provide insight into how & why we've made such API decisions.
+
+When the language provides great variant facilities already, not much else is needed in order to compose features into an API. Aim that sweet spot where we don't try to to overly much and incur a big upfront API learning overhead
+
+The reducer uses regular setState semantics, and we should all be glad for it; setState is _the_ way reactjs works, and will become gradually important as we move toward async react in fibers. had we chosen a global store, it'd be very unclear what the semantics will be in conjunction with future react.
+
+single place to glance for the state updates. ergonomy. not true for lifecycle events yet, but that'd be breaking, and since we're dedicated to have as few breaking changes as possible, etc.
+
+our feedback global store, left out indecisive. still able to byos so that's nice
+
+tradeoff: one extra layer of indirection. from feedback, learnable. all reducers look similar
+
+benefits: react async mode, eliminates awkward corners of rr, hype
+
+
+in colalboration with the reactjs team
+
+easier to test
+
+TODO finish post
+
 # 0.2.1 Released
 
 July 5, 2017
