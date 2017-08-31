@@ -57,28 +57,27 @@ ReactDOMRe.renderToElementWithId (make message::"Hello!" [||]) "index";
 Demonstrates calling an async "setState" in idiomatic ReasonReact
 
 ```reason
-type actions =
+type action =
   | Tick
   | Click;
 
-type instanceVars = {timerId: option Js.Global.intervalId};
-
-type state = {count: int, mutable instanceVars};
+type state = {
+  count: int,
+  timerId: ref (option Js.Global.intervalId)
+};
 
 let component = ReasonReact.reducerComponent "MyClock";
 
 let make _children => {
   ...component,
-  initialState: fun () => {count: 0, instanceVars: {timerId: None}},
+  initialState: fun () => {count: 0, timerId: ref None},
   reducer: fun action state =>
     switch action {
     | Tick => ReasonReact.Update {...state, count: state.count + 1}
     | Click => ...
     },
   didMount: fun self => {
-    self.state.instanceVars = {
-      timerId: Some (Js.Global.setInterval (self.reduce (fun _ => Tick)) 1000)
-    };
+    self.state.timerId := Some (Js.Global.setInterval (self.reduce (fun _ => Tick)) 1000);
     ReasonReact.NoUpdate
   },
   render: ...

@@ -284,7 +284,7 @@ In ReactJS, you'd update the state inside a callback handler, e.g.
 In ReasonReact, you'd gather all these state-setting handlers into a single place, the component's `reducer`! Here's a full example, which we'll explain in detail:
 
 ```reason
-type actions =
+type action =
   | Click
   | Toggle;
 
@@ -333,6 +333,8 @@ Notice the return value of `reducer`? The `ReasonReact.Update` part. Instead of 
 - `ReasonReact.SideEffects (self => unit)`: no state update, but trigger a side-effect, e.g. `ReasonReact.SideEffects (fun _self => Js.log "hello!")`.
 - `ReasonReact.UpdateWithSideEffects state (self => unit)`: update the state, **then** trigger a side-effect.
 
+_If you're a power user, there's also `SilentUpdate` and `SilentUpdateWithSideEffects`. See reasonReact.rei to see what they do. Don't use them if you're trying to update a ref/timer/any other instance variable_.
+
 **Note**: `reducer` must be pure! Don't do side-effects in them directly. You'll thank us when we enable the upcoming concurrent React (Fibers). Use `SideEffects` or `UpdateWithSideEffects` to enqueue a side-effect.
 
 #### Async State Setting
@@ -348,35 +350,34 @@ In ReasonReact, since the new state, if any, is returned from the `reducer`, the
 Instead, you'd do:
 
 ```reason
-type actions =
+type action =
   | Tick
   | Click;
 
-type instanceVars = {timerId: option Js.Global.intervalId};
-
-type state = {count: int, mutable instanceVars};
+type state = {
+  count: int,
+  timerId: ref (option Js.Global.intervalId)
+};
 
 let component = ReasonReact.reducerComponent "MyClock";
 
 let make _children => {
   ...component,
-  initialState: fun () => {count: 0, instanceVars: {timerId: None}},
+  initialState: fun () => {count: 0, timerId: ref None},
   reducer: fun action state =>
     switch action {
     | Tick => ReasonReact.Update {...state, count: state.count + 1}
     | Click => ...
     },
   didMount: fun self => {
-    self.state.instanceVars = {
-      timerId: Some (Js.Global.setInterval (self.reduce (fun _ => Tick)) 1000)
-    };
+    self.state.timerId := Some (Js.Global.setInterval (self.reduce (fun _ => Tick)) 1000);
     ReasonReact.NoUpdate
   },
   render: ...
 };
 ```
 
-Aka, creating an `update` handler and immediately invoke it. See the full [counter example in the examples page](./examples.html#examples-counter).
+Aka, creating a `reducer` handler as you would normally. See the full [counter example in the examples page](./examples.html#examples-counter).
 
 ### Lifecycle Events
 
@@ -484,14 +485,12 @@ const Greeting = React.createClass({
 });
 ```
 
-In reality, this is nothing but a thinly veiled way to mutate a component's "state", without triggering a re-render. ReasonReact asks you to correctly put these instance variables into your component's `state`, and explicitly mark them as mutable:
+In reality, this is nothing but a thinly veiled way to mutate a component's "state", without triggering a re-render. ReasonReact asks you to correctly put these instance variables into your component's `state`, into Reason [`ref`s](https://reasonml.github.io/guide/language/mutation).
 
 ```reason
-type instanceVars = {intervalId: option int};
-
 type state = {
   someRandomState: option string,
-  mutable instanceVars: instanceVars
+  intervalId: ref (option int)
 };
 
 let component = ...; /* remember, `component` needs to be close to `make`, and after `state` type declaration! */
@@ -499,11 +498,11 @@ let make _children => {
   ...component,
   initialState: fun () => {
     someRandomState: Some "hello",
-    instanceVars: {intervalId: None}
+    intervalId: ref None
   },
   didMount: fun {state} => {
     /* mutate the value here */
-    state.instanceVars = {intervalId: Some (Js.Global.setInterval ...)};
+    state.intervalId := Some (Js.Global.setInterval ...);
     /* no extra state update needed */
     ReasonReact.NoUpdate
   },
@@ -511,32 +510,39 @@ let make _children => {
 };
 ```
 
-**All your instance variables (subscriptions, refs, etc.) should be in a single collection in a single mutable state field**. Call it `instanceVars` by convention. Why such constraint? To prepare for concurrent React which needs to manage side-effects & mutations more formally. Stay tuned.
+**All your instance variables (subscriptions, refs, etc.) must be in state fields marked as a `ref`**. Don't directly use a `mutable` field on the state record, use an immutable field pointing to a Reason `ref`. Why such constraint? To prepare for concurrent React which needs to manage side-effects & mutations more formally. Stay tuned.
 
-### Ref
+### React Ref
 
-A `ref` would be just another instance variable. You'd type it as `ReasonReact.reactRef` if it's attached to a custom component, and `Dom.element` if it's attached to a React DOM element.
+_Not to be confused with Reason `ref`, the language feature that enables mutation_.
+
+A ReasonReact `ref` would be just another instance variable. You'd type it as `ReasonReact.reactRef` if it's attached to a custom component, and `Dom.element` if it's attached to a React DOM element.
 
 ```reason
-type instanceVars = {mySectionRef: option ReasonReact.reactRef};
-
-type state = {isOpen: bool, mutable instanceVars};
+type state = {
+  isOpen: bool,
+  mySectionRef: ref (option ReasonReact.reactRef)
+};
 
 let setSectionRef theRef {ReasonReact.state} => {
-  state.instanceVars = {mySectionRef: Js.Null.to_opt theRef};
+  state.mySectionRef := Js.Null.to_opt theRef;
   /* wondering about Js.Null.to_opt? See the note below */
 };
 
-let component = ReasonReact.statefulComponent "MyPanel";
+let component = ReasonReact.reducerComponent "MyPanel";
 
 let make ::className="" _children => {
   ...component,
-  initialState: fun () => {isOpen: false, instanceVars: {mySectionRef: None}},
+  initialState: fun () => {
+    isOpen: false,
+    mySectionRef: ref None
+  },
+  reducer: ...,
   render: fun self => <Section1 ref=(self.handle setSectionRef) />
 };
 ```
 
-Attaching to a React DOM element looks the same: `state.instanceVars = {myDivRef: Js.Null.to_opt theRef}`.
+Attaching to a React DOM element looks the same: `state.mySectionRef = {myDivRef: Js.Null.to_opt theRef}`.
 
 **Note** how [ReactJS refs can be null](https://github.com/facebook/react/issues/9328#issuecomment-298438237). Which is why `theRef` and `myDivRef` are converted from a [JS nullable](http://bucklescript.github.io/bucklescript/Manual.html#_null_and_undefined) to an OCaml `option` (Some/None). When you use the ref, you'll be forced to handle the null case through a `switch`, which prevents subtle errors!
 
@@ -548,7 +554,7 @@ We also expose an escape hatch `ReasonReact.refToJsObj` of type `ReasonReact.rea
 
 ```reason
 let handleClick event self =>
-  switch self.state.mySectionRef {
+  switch !self.state.mySectionRef {
   | None => ()
   | Some r => (ReasonReact.refToJsObj r)##someMethod 1 2 3 /* I solemnly swear that I am up to no good */
   };
