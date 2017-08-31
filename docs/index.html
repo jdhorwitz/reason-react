@@ -510,7 +510,7 @@ let make _children => {
 };
 ```
 
-**All your instance variables (subscriptions, refs, etc.) must be in state fields marked as a `ref`**. Don't directly use a `mutable` field on the state record, use an immutable field pointing to a Reason `ref`. Why such constraint? To prepare for concurrent React which needs to manage side-effects & mutations more formally. Stay tuned.
+**All your instance variables (subscriptions, refs, etc.) must be in state fields marked as a `ref`**. Don't directly use a `mutable` field on the state record, use an immutable field pointing to a Reason `ref`. Why such constraint? To prepare for concurrent React which needs to manage side-effects & mutations more formally. More details [here](https://reasonml.github.io/try/?reason=C4TwDgpgBAzlC8UDeBDAXFAlgO2AGlgHsBbCASWxmBWwGMIA1FAJw2YgDMtcBfAbgBQAegBUUbIQDuUEUIEAbCMFjVg0REgFQo6KAEY8WoqQpUa9JqyjsuAJgH9hYiMQCu8lGqgADM2u86tPQwcBzMJFC08oQwruwAdFAAKgAW0OwoACZQhFy+qhABxJgA5inKAEbQZopQFSBQwGmNmKRYwADkcBAAHhC0rmqZGLJOUByu2Mh+EDwIAHzjk1AAFACUC1AAShAoMITYOyi0wPEAqmCZntBI8XczBBUec6OKyjO2CMh38Q86GABmRyiOqDKBuVSYA45PIzALYCAQTJwYCEOrpTiKE5I7g+D4BKiYeTyACEMjkM1+JHIlGodEYLCgaEQABZBCCYClCO5slUoCzyQIAFIweLREpQEkfKkmWnmBnMdliJqYOCSbnyTLYDrKdXMADWWC4kmgmTRoEgOgQqAwOHw4MGKCe1WppjpFhYtt45KAA) if you're ever interested.
 
 ### React Ref
 
@@ -776,9 +776,9 @@ You can use a function as a component in ReactJS. In ReasonReact, this is not ye
 
 Check your terminal to see if we've provided a dedicated error message for your use-case! We've encoded a few tips in the type errors.
 
-#### Unbound record field update/Unbound record field handle
+#### Unbound record field reduce/Unbound record field handle
 
-This means you've passed `self` to a helper function of your render, and it used it like so: `<div onClick=(self.update click)/>`. This is because the record can't be found in the scope of the file. Just annotate it: `<div onClick=(self.ReasonReact.update click)/>`.
+This means you've passed `self` to a helper function of your render, and it used it like so: `<div onClick=(self.reduce click)/>`. This is because the record can't be found in the scope of the file. Just annotate it: `<div onClick=(self.ReasonReact.reduce click)/>`.
 
 #### Something about callbacks passed to `reduce` (or `handle`) having incompatible types between them
 

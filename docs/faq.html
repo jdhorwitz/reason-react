@@ -32,9 +32,9 @@ _Copied over from the main page for visiblity_.
 
 Check your terminal to see if we've provided a dedicated error message for your use-case! We've encoded a few tips in the type errors.
 
-#### Unbound record field update/Unbound record field handle
+#### Unbound record field reduce/Unbound record field handle
 
-This means you've passed `self` to a helper function of your render, and it used it like so: `<div onClick=(self.update click)/>`. This is because the record can't be found in the scope of the file. Just annotate it: `<div onClick=(self.ReasonReact.update click)/>`.
+This means you've passed `self` to a helper function of your render, and it used it like so: `<div onClick=(self.reduce click)/>`. This is because the record can't be found in the scope of the file. Just annotate it: `<div onClick=(self.ReasonReact.reduce click)/>`.
 
 #### Something about callbacks passed to `reduce` (or `handle`) having incompatible types between them
 

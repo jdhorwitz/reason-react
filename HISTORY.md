@@ -12,11 +12,9 @@ see guide change
 
 TODO
 
-## SilentUpdate deprecated
+## InstanceVars/Ref usage Changed
 
-see the new instancevars section
-
-TODO
+Before, we used to recommend using `ReasonReact.SilentUpdate` to deal with ReactJS' instance variables pattern (e.g. attaching properties onto the component class itself, like timer IDs, refs, etc.). Now we've moved to using a Reason `ref` cell (not the React ref, the [mutative Reason `ref`](https://reasonml.github.io/guide/language/imperative-loops)). See the updated [instance variables section](https://reasonml.github.io/reason-react/#reason-react-component-creation-instance-variables).
 
 ## Miscellaneous Changes
 
