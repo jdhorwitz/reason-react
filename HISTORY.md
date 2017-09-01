@@ -1,26 +1,33 @@
 # 0.2.4
 
-Major update, but again without breaking changes! =)
+Major update, but again without breaking changes, and _again_ with a convenience [migration script](https://github.com/reasonml/reason-react/blob/master/migrateFrom02xTo024.js)! =)
+
+Use it like so, **after reading this migration guide**: `node node_modules/reason-react/migrateFrom02xTo024.js myReasonFile.re`.
 
 The big change in this release is the deprecation of `statefulComponent` and `statefulComponentWithRetainedProps`. Still working; just deprecated. We'll remove it in the next breaking version.
 
-**If you'd like to know why we've made this change, please read [our blog post](). Thanks!**
+**If you'd like to know why we've made this change, please read [our blog post](https://reasonml.github.io/reason-react/reason-react/docs/blog.html#reducers-are-here). Thanks!**
 
 ## Migrate From StatefulComponent to ReducerComponent
 
-see guide change
+There's no more need for `ReasonReact.statefulComponent`. Every state change is now controlled through a dedicated, centralized, react-fiber-ready, component-local mechanism called "reducer" (aka, the hype word for "state machine").
 
-TODO
-
-## InstanceVars/Ref usage Changed
+## InstanceVars/React Ref Usage Changed
 
 Before, we used to recommend using `ReasonReact.SilentUpdate` to deal with ReactJS' instance variables pattern (e.g. attaching properties onto the component class itself, like timer IDs, refs, etc.). Now we've moved to using a Reason `ref` cell (not the React ref, the [mutative Reason `ref`](https://reasonml.github.io/guide/language/imperative-loops)). See the updated [instance variables section](https://reasonml.github.io/reason-react/#reason-react-component-creation-instance-variables).
+
+The new recommendation also solves a corner-case bug with assigning more than one refs in the render.
+
+## LifeCycle
+
+The future ReactJS Fibers in ReasonReact won't work well with lifecycle events that return the new state (aka `ReasonReact.Update {...state, foo: bar}`). Please return `ReasonReact.NoUpdate`. If you really need to trigger a state change, before the return, use a `self.reduce (fun () => Bar) ()`, aka immediately apply a reduce.
 
 ## Miscellaneous Changes
 
 - Add `defaultChecked`, `loop` and others to DOM attribute (#29, #37, #44, #50).
 - Fix `cloneElement` binding (#49).
 - Fix stateless components's `willReceiveProps`'s return value. It's now `unit` again.
+- Fix wrong version of `retainedProps` in `willReceiveProps`.
 - Remove the dependency on `create-react-class`. Now we're back to being dependency-free!
 - Bump react/react-dom to 16.
 - React/react-dom are now dependencies, rather than peerDependencies. This follows the Reason/BS idiom of making the bound library an implementation detail. NPM/Yarn will still dedupe multiple versions of react/react-dom correctly; no worries about that.

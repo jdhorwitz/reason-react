@@ -335,7 +335,16 @@ Notice the return value of `reducer`? The `ReasonReact.Update` part. Instead of 
 
 _If you're a power user, there's also `SilentUpdate` and `SilentUpdateWithSideEffects`. See reasonReact.rei to see what they do. Don't use them if you're trying to update a ref/timer/any other instance variable_.
 
-**Note**: `reducer` must be pure! Don't do side-effects in them directly. You'll thank us when we enable the upcoming concurrent React (Fibers). Use `SideEffects` or `UpdateWithSideEffects` to enqueue a side-effect.
+##### Important Notes
+
+**Please read through all these points**, if you want to fully take advantage of `reducer` and avoid future ReactJS Fiber race condition problems.
+
+- The `action` type's variants can carry a payload: `onClick=(self.reduce (fun data => Click data.foo))`.
+- Don't pass the whole event into the action variant's payload. ReactJS events are pooled; by the time you intercept the action in the `reducer`, the event's already recycled.
+- `reducer` must be pure! Don't do side-effects in them directly. You'll thank us when we enable the upcoming concurrent React (Fibers). Use `SideEffects` or `UpdateWithSideEffects` to enqueue a side-effect.
+- If you need to do e.g. `ReactEventRe.BlablaEvent.preventDefault event`, do it in `self.reduce`, before returning the action type. Again, `reducer` must be pure.
+- If your state only holds instance variables, it also means (by the convention in the instance variables section) that your component only contains `self.handle`, no `self.reduce`. You still needs to specify a `reducer` like so: `reducer: fun () _state => ReasonReact.NoUpdate`. Otherwise you'll get a `variable cannot be generalized` type error.
+
 
 #### Async State Setting
 
