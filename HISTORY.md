@@ -1,16 +1,37 @@
 # 0.2.4
 
-Major update, but again without breaking changes, and _again_ with a convenience [migration script](https://github.com/reasonml/reason-react/blob/master/migrateFrom02xTo024.js)! =)
+**Major update**, but again with **no** breaking changes, and _again_ with a convenience [migration script](https://github.com/reasonml/reason-react/blob/master/migrateFrom02xTo024.js)! =)
 
-Use it like so, **after reading this migration guide**: `node node_modules/reason-react/migrateFrom02xTo024.js myReasonFile.re`.
+The big change in this release is the deprecation of `statefulComponent` and `statefulComponentWithRetainedProps`.
 
-The big change in this release is the deprecation of `statefulComponent` and `statefulComponentWithRetainedProps`. Still working; just deprecated. We'll remove it in the next breaking version.
+## Prerequisites
 
-**If you'd like to know why we've made this change, please read [our blog post](https://reasonml.github.io/reason-react/reason-react/docs/blog.html#reducers-are-here). Thanks!**
+**Please first read the [blog post](https://reasonml.github.io/reason-react/reason-react/docs/blog.html#reducers-are-here)**.
+
+**After** reading this migration guide, use the migratio script (or not) like so: `node node_modules/reason-react/migrateFrom02xTo024.js myReasonFile.re`.
 
 ## Migrate From StatefulComponent to ReducerComponent
 
 There's no more need for `ReasonReact.statefulComponent`. Every state change is now controlled through a dedicated, centralized, react-fiber-ready, component-local mechanism called "reducer" (aka, the hype word for "state machine").
+
+[Reason-react-example](https://github.com/reasonml-community/reason-react-example) is updated too. Go check the examples afterward!
+
+In short:
+
+- Replace all `ReasonReact.statefulComponent` with `ReasonReact.reducerComponent`.
+- Replace e.g. `self.update handleClick` (where `handleClick` is `fun self => ReasonReact.Update {...self.state, foo: bar}`) with `self.reduce (fun _ => Click)`. `Click` is just a variant constructor you've defined. Let's call it "action".
+- Add a `reducer` function to the body of your `...component` spread:
+
+```reason
+reducer: fun action state =>
+  switch action {
+  | Click => ReasonReact.Update {...state, foo: bar}  
+  }
+```
+
+We've also exposed new `ReasonReact.SideEffects` (aka `ReasonReact.NoUpdate`, with side-effect) and `ReasonReact.UpdateWithSideEffects` (`ReasonReact.Update` + side-effect).
+
+The relevant section on actions, reducers and the new update additions are [in the main docs](https://reasonml.github.io/reason-react/docs/index.html#reason-react-component-creation-state-actions-reducer).
 
 ## InstanceVars/React Ref Usage Changed
 
@@ -20,7 +41,7 @@ The new recommendation also solves a corner-case bug with assigning more than on
 
 ## LifeCycle
 
-The future ReactJS Fibers in ReasonReact won't work well with lifecycle events that return the new state (aka `ReasonReact.Update {...state, foo: bar}`). Please return `ReasonReact.NoUpdate`. If you really need to trigger a state change, before the return, use a `self.reduce (fun () => Bar) ()`, aka immediately apply a reduce.
+The future ReactJS Fiber in ReasonReact won't work well with lifecycle events that return the new state (aka `ReasonReact.Update {...state, foo: bar}`). Please return `ReasonReact.NoUpdate`. If you really need to trigger a state change, before the return, use a `self.reduce (fun () => Bar) ()`, aka immediately apply a reduce.
 
 ## Miscellaneous Changes
 
@@ -32,13 +53,15 @@ The future ReactJS Fibers in ReasonReact won't work well with lifecycle events t
 - Bump react/react-dom to 16.
 - React/react-dom are now dependencies, rather than peerDependencies. This follows the Reason/BS idiom of making the bound library an implementation detail. NPM/Yarn will still dedupe multiple versions of react/react-dom correctly; no worries about that.
 
+Enjoy!
+
 # 0.2.1
 
 Breaking update (sorry!)
 
 **We've finally removed `ReactRe`**. It's been deprecated since 0.1.4. And we've offered a comprehensive migration in the 0.1.4 section below.
 
-We've given folks a bit of breathing room in terms of breaking changes; now we're shipping another one, this time with a small migration script. **After installing reason-react**, use `node node_modules/reason-react/migrateFrom015To020.js myReasonFile.re`
+We've given folks a bit of breathing room in terms of breaking changes; now we're shipping another one, this time with a small migration script. **After installing reason-react**, use `node node_modules/reason-react/oldScriptCarefulMigrateFrom015To020.js myReasonFile.re`
 
 - Instead of `fun state self => ...`, we've now rolled `state` into `self`, and now, you have `fun {state, handle} => ...`. The whole record is `self`. Feel free to destructure and get whatever you need!
 - `self` now contains a new prop, `retainedProps`. This is a new (non-breaking) feature that solves the previous slightly inconvenient way of forwarding props to state, as described in the old API's lifecycle methods. Now there's a dedicated API for it! The docs describes this in detail.

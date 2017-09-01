@@ -24,11 +24,9 @@
 
 # Reducers Are Here!
 
-WIP blog post
+_v0.2.4 was done in collaboration with the ReactJS team_.
 
-we've started working with reactjs folks (links)
-
-Go and get v0.2.4! It's a **non-breaking change**; what are you waiting for? =)
+This is a release we've been planning for quite a while now, and is a release that embodies what the Reason team is trying to achieve through ReasonReact.
 
 First, a bit of context: if you use ReactJS, then you've likely heard of the the massively popular [Redux](https://github.com/reactjs/redux/) state management library. Redux's original inspiration comes from [Elm](http://elm-lang.org), whose root we share.
 
@@ -57,46 +55,32 @@ let make ::className _children => {
       <button onClick=(reduce (fun _ => BumpCount))>
         (ReasonReact.stringToElement message)
       </button>
-      <Dialog onToggle=(reduce (fun show => ToggleDialog show)) />
+      <MyButton onToggle=(reduce (fun toggleState => ToggleDialog toggleState)) />
+      (state.showDialog ? <Dialog /> : ReasonReact.nullElement)
     </div>
   }
 };
 ```
 
-That's basically it! A `reducer` function on your component that pattern-matches on the possible state transform actions, and specify what the next state should be. This is akin to a **state machine**, where you feed in the token (action) and transition (reducer) into the next state.
+_More examples at [reason-react-example](https://github.com/reasonml-community/reason-react-example)_.
 
-Hopefully you can also see (maybe with a bit of past ReasonReact experience) that the new reducer feature is nothing but a thin layer on top of setState.
+That's basically it! A `reducer` function on your component, that pattern-matches on the possible state transforms, and specifies what the next state should be. This is akin to a **state machine**, where you feed in the token (action) and transition (reducer) into the next state.
 
-to be clear: this is local. if you're into thicker state management solutions, this should still work with whichever state management paradigm you're comfortable with in reactjs.
+Hopefully you can see that the new `reducer` feature is **nothing but a thin layer on top of `setState`**. The whole API is component-local, and doesn't disturb your existing state management solution. If you're really into crazier and potentially global state management solutions, the new API should still work under it.
 
-**Stateless components haven't changed**.
+Stateless components haven't changed.
 
-SilentUpdate deprecated. Mutate state.instanceVars instead (migration url)
-
-migratin guide url
+Head to the [migration guide](https://github.com/reasonml/reason-react/blob/master/HISTORY.md#024) to see how you can upgrade your ReasonReact app. Surprise! It's a **non-breaking change**! What are you waiting for? =)
 
 ## Design Decisions
 
-in the spirit of the reason docs sections, we'll provide insight into how & why we've made such API decisions.
+Why the reducer API? Upon careful examination, you'll realize it's an extra layer of indirection compared to the conventional state-setting: instead of invoking the callback directly through `self.update`, you now send an action through `self.reduce`, which is then matched inside `reducer`.
 
-When the language provides great variant facilities already, not much else is needed in order to compose features into an API. Aim that sweet spot where we don't try to to overly much and incur a big upfront API learning overhead
+For one, this is in preparation for the upcoming ReactJS Fiber. Fiber's concurrency requires us handling state updates & side-effects in a more principled way, and `reducer` is a step toward that. We're also decided to iterate on ReasonReact instead of core React, partially because we're Reason users and partially because ReasonReact's nature of being new & less used allow us to iterate exciting new APIs without legacy concerns (though [discussions](https://github.com/facebook/react/issues/10580) have [started](https://github.com/facebook/react/issues/10581) on first-class ReasonReact integration inside ReactJS).
 
-The reducer uses regular setState semantics, and we should all be glad for it; setState is _the_ way reactjs works, and will become gradually important as we move toward async react in fibers. had we chosen a global store, it'd be very unclear what the semantics will be in conjunction with future react.
+More technically speaking, the reducer centralizes all your state transition in a single spot and provides, along with the `action` variant type you've defined, an overview of the whole behavior of a component (including principled side-effects in the reducer!). This also solves some obscure corners of past ReasonReact, while enabling potentially much better testing paradigms in the near future. Best of all: since it's just a thin declarative layer on top of ReactJS' imperative `setState`, there aren't many unknowns. If you're used to setState, you know reduce. When the language provides great variant facilities already, not much else is needed in order to compose features together into a great API.
 
-single place to glance for the state updates. ergonomy. not true for lifecycle events yet, but that'd be breaking, and since we're dedicated to have as few breaking changes as possible, etc.
-
-our feedback global store, left out indecisive. still able to byos so that's nice
-
-tradeoff: one extra layer of indirection. from feedback, learnable. all reducers look similar
-
-benefits: react async mode, eliminates awkward corners of rr, hype
-
-
-in colalboration with the reactjs team
-
-easier to test
-
-TODO finish post
+Enjoy!
 
 # 0.2.1 Released
 
